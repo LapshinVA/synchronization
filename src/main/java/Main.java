@@ -1,12 +1,12 @@
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 
 public class Main {
 
-    public static final Map<Integer, Integer> sizeToFreq = new Hashtable<>();
+    public static final Map<Integer, Integer> sizeToFreq = new HashMap<>();
 
-    public static void main(String[] args) throws InterruptedException, ExecutionException {
+    public static void main(String[] args) throws InterruptedException {
         final int countThreads = 1000;
+        List<Thread> treads = new ArrayList<>();
         for (int i = 0; i < countThreads; i++) {
             Runnable task = () -> {
                 String str = generateRoute("RLRFR", 100);
@@ -17,19 +17,24 @@ public class Main {
                         countR++;
                     }
                 }
-                if (sizeToFreq.containsKey(countR)) {
-                    int freq = sizeToFreq.get(countR);
-                    int freqNew = freq + 1;
-                    sizeToFreq.put(countR, freqNew);
-                } else {
-                    sizeToFreq.put(countR, 1);
+                synchronized (sizeToFreq) {
+                    if (sizeToFreq.containsKey(countR)) {
+                        int freq = sizeToFreq.get(countR);
+                        int freqNew = freq + 1;
+                        sizeToFreq.put(countR, freqNew);
+                    } else {
+                        sizeToFreq.put(countR, 1);
+                    }
                 }
             };
             Thread thread = new Thread(task);
+            treads.add(thread);
             thread.start();
-            thread.join();
-
         }
+        for (Thread tread : treads) {
+            tread.join();
+        }
+
         printResult(sizeToFreq);
     }
 
